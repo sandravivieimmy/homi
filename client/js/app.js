@@ -669,7 +669,7 @@ function filteredItemsFor(uci) {
     if (state.search) {
       const q = state.search.toLowerCase();
       const hay =
-        `${i.equipo} ${i.marca} ${i.modelo} ${i.serie} ${i.placa} ${i.codigoCalibracion} ${i._code}`.toLowerCase();
+        `${i.equipo} ${i.marca} ${i.modelo} ${i.serie} ${i.placa} ${i.modulo} ${i.codigoCalibracion} ${i._code}`.toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;
