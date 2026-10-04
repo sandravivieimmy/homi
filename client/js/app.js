@@ -1640,3 +1640,6 @@ document.getElementById("aiInput").addEventListener("keydown", (e) => {
 pushBotMsg(
   "Hola, soy el asistente de mantenimiento de HOMI. Puedo responder preguntas sobre el inventario de equipos biomédicos de las UCIs Intermedias (Neonatal, Quemados y P1): vencimientos, calibraciones próximas, cumplimiento por unidad y más. Conecta tu clave de Gemini para consultas libres, o usa las sugerencias rápidas.",
 );
+
+// Primer pintado con los datos traídos de la API
+renderAll();
