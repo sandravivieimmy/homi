@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      HOMI · Panel de Mantenimiento y Calibración — UCIs Intermedias
+    </title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/client/styles/styles.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <div class="brand-mark">H+</div>
+          <div class="brand-text">
+            <div class="b1">HOMI · Hospital La Misericordia</div>
+            <div class="b2">Ingeniería Biomédica</div>
+          </div>
+        </div>
+        <div class="topbar-title">
+          Mantenimiento &amp; Calibración · UCIs Intermedias
+        </div>
+        <div class="topbar-spacer"></div>
+        <div class="clock">
+          <b id="clockTime">--:--:--</b><span id="clockDate">-- --- ----</span>
+        </div>
+        <button class="ai-btn" id="openAiBtn">
+          <span class="dot"></span>
+          Asistente IA
+        </button>
+      </div>
+    </div>
+
+    <div class="wrap">
+      <div class="vitals" id="vitalsStrip"></div>
+
+      <div class="alert-panel">
+        <div class="alert-head">
+          <h2>Panel de alertas preventivas</h2>
+          <span class="count-chip" id="alertCount">0</span>
+          <span class="sub"
+            >Aviso automático 30 días antes de cada mantenimiento o calibración
+            programada</span
+          >
+        </div>
+        <div class="alert-scroll" id="alertScroll"></div>
+      </div>
+
+      <div class="filterbar">
+        <div class="searchbox">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+          <input
+            type="text"
+            id="globalSearch"
+            placeholder="Buscar equipo, marca, serie, placa, número de certificado de aseguramiento metrológico…"
+          />
+        </div>
+        <div class="seg" id="statusFilter">
+          <button class="active" data-f="all">Todos</button>
+          <button data-f="rojo">Vencidos</button>
+          <button data-f="amarillo">Próximos</button>
+          <button data-f="verde">Ejecutado</button>
+          <button data-f="fuera">Fuera de servicio</button>
+        </div>
+        <button class="add-eq-btn" id="addEquipoBtn">+ Agregar equipo</button>
+      </div>
+
+      <div class="uci-tabs" id="uciTabs"></div>
+
+      <div id="uciSectionsContainer"></div>
+
+      <footer>
+        Panel generado para <b>HOMI · Hospital La Misericordia</b> — Ingeniería
+        Biomédica · Inventario de equipos UCIs Intermedias (Neonatal, Quemados,
+        P1) · <span id="footerCount">0</span> equipos registrados
+      </footer>
+    </div>
+
+    <div class="ai-overlay" id="aiOverlay"></div>
+    <div class="ai-drawer" id="aiDrawer">
+      <div class="ai-drawer-head">
+        <div class="ic">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#071B2C"
+            stroke-width="2.4"
+          >
+            <path
+              d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"
+            />
+          </svg>
+        </div>
+        <div>
+          <h3>Asistente de mantenimiento</h3>
+          <p>Consultas inteligentes sobre el inventario · Google Gemini</p>
+        </div>
+        <button class="ai-close" id="closeAiBtn">✕</button>
+      </div>
+
+      <div class="ai-key-box" id="aiKeyBox">
+        <label>Clave de API de Google Gemini</label>
+        <div class="ai-key-row">
+          <input
+            type="password"
+            id="geminiKeyInput"
+            placeholder="Pega tu API key (AIza…)"
+          />
+          <button id="saveKeyBtn">Guardar</button>
+        </div>
+        <div class="ai-key-note">
+          La clave sólo se guarda en la memoria de esta sesión del navegador,
+          nunca se envía a HOMI ni se almacena en disco. Obtén una clave
+          gratuita en
+          <a
+            href="https://aistudio.google.com/apikey"
+            target="_blank"
+            rel="noopener"
+            >Google AI Studio</a
+          >. Para producción hospitalaria, se recomienda enrutar esta llamada a
+          través de un backend propio en vez de exponer la clave en el
+          navegador.
+        </div>
+      </div>
+
+      <div class="ai-chips" id="aiChips"></div>
+
+      <div class="ai-chat" id="aiChat"></div>
+
+      <div class="ai-input-row">
+        <textarea
+          id="aiInput"
+          placeholder="Pregunta sobre el inventario, ej: ¿qué equipos vencen esta semana en P1?"
+        ></textarea>
+        <button class="ai-send" id="aiSendBtn">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+          >
+            <path d="m3 3 18 9-18 9 4.5-9L3 3Z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="detail-overlay" id="detailOverlay"></div>
+    <div class="detail-modal" id="detailModal">
+      <div class="detail-modal-head">
+        <div class="dm-title">
+          <h4 id="detailModalTitle">Equipo</h4>
+          <p id="detailModalSub">—</p>
+        </div>
+        <div class="detail-modal-actions" id="detailModalActions"></div>
+        <button class="detail-modal-close" id="detailModalClose">✕</button>
+      </div>
+      <div class="detail-modal-body" id="detailModalBody"></div>
+    </div>
+
+    <!-- Firebase (sincronización en tiempo real entre computadores) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,27 @@
+# Render Blueprint para HOMI (backend PHP + frontend estático)
+# Requiere que HOMI/ esté en un repositorio Git (monorepo con carpetas server/ y client/).
+services:
+  # Backend: API PHP (Dockerfile en server/)
+  - type: web
+    name: homi-api
+    runtime: docker
+    rootDir: server
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /ucis
+    envVars:
+      - key: DB_HOST
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASS
+        sync: false
+      - key: DB_NAME
+        sync: false
+
+  # Frontend: sitio estático (client/)
+  - type: web
+    name: homi-client
+    runtime: static
+    rootDir: client
+    staticPublishPath: .

@@ -1,0 +1,6 @@
+vendor
+includes/.env
+.git
+.gitignore
+Dockerfile
+.dockerignore

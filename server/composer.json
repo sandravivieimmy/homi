@@ -1,0 +1,12 @@
+{
+  "require": {
+    "vlucas/phpdotenv": "^5.7"
+  },
+  "autoload": {
+    "psr-4": {
+      "MVC\\": "./",
+      "Controllers\\": "./controllers",
+      "Model\\": "./models"
+    }
+  }
+}
