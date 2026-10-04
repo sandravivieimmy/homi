@@ -3,16 +3,13 @@
 namespace Controllers;
 
 use Model\Uci;
+use MVC\Http;
 
 class UciController
 {
     public static function index()
     {
-        $ucis = Uci::all();
-
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode($ucis);
-        exit;
+        Http::json(Uci::all());
     }
 
     public static function show($id)

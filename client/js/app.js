@@ -405,12 +405,38 @@ async function buildData() {
     const equiposMTC = await response.json();
 
     // 2. Mapear la información para agregar las propiedades calculadas
-    return equiposMTC.map((item) => {
+    return equiposMTC.map((raw) => {
+      // Adaptamos los nombres de la API a los que usa la interfaz
+      const item = {
+        ...raw,
+        ubicacion: raw.uci, // SERVICIO = nombre de la UCI
+        modulo: raw.ubicacion || "", // UBICACIÓN = ubicación específica
+        registroInvima: raw.registro_invima || "",
+        clasificacionInvima: raw.clasificacion_invima || "",
+        codigoCalibracion: raw.certificado_calibracion || "",
+        frecuenciaMtto: raw.frecuencia || "",
+      };
+
+      // Fuera de servicio: la interfaz lo representa con ese texto en las fechas;
+      // se conservan las fechas reales en _orig para poder editarlas.
+      if (String(raw.fuera_servicio) === "1") {
+        item._orig = {
+          mttoRealizado: item.mttoRealizado,
+          mttoProximo: item.mttoProximo,
+          frecuenciaMtto: item.frecuenciaMtto,
+          calibracion: item.calibracion,
+          proximaCalibracion: item.proximaCalibracion,
+        };
+        item.mttoRealizado = "FUERA DE SERVICIO";
+        item.mttoProximo = "FUERA DE SERVICIO";
+        item.frecuenciaMtto = "FUERA DE SERVICIO";
+        item.calibracion = "FUERA DE SERVICIO";
+        item.proximaCalibracion = "FUERA DE SERVICIO";
+      }
+
       // Extraemos o calculamos los estados basados en las respuestas del servidor
-      const mtto = statusForDate(item.mttoProximo || item.fecha_proxima_mtto);
-      const cal = statusForDate(
-        item.proximaCalibracion || item.fecha_proxima_calibracion,
-      );
+      const mtto = statusForDate(item.mttoProximo);
+      const cal = statusForDate(item.proximaCalibracion);
       const overall = overallStatus(item);
 
       return {
@@ -564,7 +590,7 @@ function renderAlerts() {
           ? responsableCal(i)
           : responsableMtto(i);
       return `
-      <div class="alert-card ${cls}" data-id="${i.id}">
+      <div class="alert-card ${cls}" data-id="${i.id}" tabindex="0" role="button" aria-label="Ver detalle de ${escapeHtml(i.equipo)}">
         <div class="a-top">
           <div>
             <div class="a-eq">${escapeHtml(i.equipo)}</div>
@@ -577,10 +603,17 @@ function renderAlerts() {
     })
     .join("");
   scroll.querySelectorAll(".alert-card").forEach((card) => {
-    card.addEventListener("click", () => {
+    const open = () => {
       const id = card.dataset.id;
       const item = DATA.find((d) => String(d.id) === String(id));
       if (item) openDetailModal(item);
+    };
+    card.addEventListener("click", open);
+    card.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        open();
+      }
     });
   });
 }
@@ -883,10 +916,17 @@ function rebindSort(uci, items, host) {
 
 function bindRowExpand(host) {
   host.querySelectorAll("tr.eq-row").forEach((tr) => {
-    tr.addEventListener("click", () => {
+    const open = () => {
       const id = tr.dataset.id;
       const item = DATA.find((d) => String(d.id) === String(id));
       if (item) openDetailModal(item);
+    };
+    tr.addEventListener("click", open);
+    tr.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        open();
+      }
     });
   });
 }
@@ -949,7 +989,7 @@ function tableHeader() {
 function rowHtml(i) {
   const stMtto = subStatus(i, "mtto");
   const stCal = subStatus(i, "cal");
-  return `<tr class="eq-row" data-id="${i.id}">
+  return `<tr class="eq-row" data-id="${i.id}" tabindex="0" aria-label="Ver detalle de ${escapeHtml(i.equipo)}">
     <td><span class="expand-ic">▸</span><span class="eq-name-wrap"><div class="eq-name">${escapeHtml(i.equipo)}</div><div class="eq-sub">${escapeHtml(i.marca)} ${escapeHtml(i.modelo)} · ${escapeHtml(i._code)}</div></span></td>
     <td class="mono">${escapeHtml(i.modulo)}</td>
     <td>${fmtDateHuman(i.mttoProximo)}<br>${daysTagHtml(i._mtto)}</td>
@@ -1140,11 +1180,12 @@ function editFormHtml(item) {
   const uciOptions = ucisDATA
     .map(
       (u) =>
-        `<option value="${escapeHtml(u.id)}" ${u === item.uci ? "selected" : ""}>${escapeHtml(UCI_META[u.nombre].short)}</option>`,
+        `<option value="${escapeHtml(u.id)}" ${u.nombre === item.uci ? "selected" : ""}>${escapeHtml(UCI_META[u.nombre].short)}</option>`,
     )
     .join("");
   const fieldsHtml = EDIT_FIELDS.map((f) => {
-    const raw = item[f.key];
+    // En equipos fuera de servicio se muestran las fechas reales guardadas, no el texto
+    const raw = item._orig && f.key in item._orig ? item._orig[f.key] : item[f.key];
     const val =
       f.type === "date"
         ? dateFieldValue(raw)
@@ -1152,7 +1193,7 @@ function editFormHtml(item) {
           ? ""
           : String(raw);
     return `<div class="edit-field">
-      <label>${escapeHtml(f.label)}</label>
+      <label for="edit-${f.key}">${escapeHtml(f.label)}</label>
       <input type="${f.type === "date" ? "date" : "text"}" id="edit-${f.key}" value="${escapeHtml(val)}">
     </div>`;
   }).join("");
@@ -1163,7 +1204,7 @@ function editFormHtml(item) {
     </div>
     <div class="edit-grid">
       <div class="edit-field">
-        <label>UCI</label>
+        <label for="edit-uci">UCI</label>
         <select id="edit-uci">${uciOptions}</select>
       </div>
       ${fieldsHtml}
@@ -1183,8 +1224,10 @@ function renderModalView(item) {
     `${UCI_META[item.uci].short} · ${item._code}`;
   document.getElementById("detailModalBody").innerHTML =
     statusBadgesHtml(item) + detailPanelHtml(item);
-  document.getElementById("detailModalActions").innerHTML =
-    `<button class="dm-btn primary" onclick="window.enterEditMode()">Editar</button>`;
+  document.getElementById("detailModalActions").innerHTML = `
+    <button class="dm-btn danger" onclick="window.deleteEquipo()">Eliminar</button>
+    <button class="dm-btn primary" onclick="window.enterEditMode()">Editar</button>
+  `;
 }
 
 function renderModalEdit(item) {
@@ -1215,10 +1258,17 @@ function renderModalCreate(item) {
   `;
 }
 
+let lastFocusBeforeModal = null;
+function showModal() {
+  lastFocusBeforeModal = document.activeElement;
+  document.getElementById("detailOverlay").classList.add("open");
+  const modal = document.getElementById("detailModal");
+  modal.classList.add("open");
+  modal.focus();
+}
 function openDetailModal(item) {
   renderModalView(item);
-  document.getElementById("detailOverlay").classList.add("open");
-  document.getElementById("detailModal").classList.add("open");
+  showModal();
 }
 function openCreateModal() {
   const blank = {
@@ -1245,12 +1295,15 @@ function openCreateModal() {
     _code: "",
   };
   renderModalCreate(blank);
-  document.getElementById("detailOverlay").classList.add("open");
-  document.getElementById("detailModal").classList.add("open");
+  showModal();
 }
 function closeDetailModal() {
   document.getElementById("detailOverlay").classList.remove("open");
   document.getElementById("detailModal").classList.remove("open");
+  if (lastFocusBeforeModal && lastFocusBeforeModal.focus) {
+    lastFocusBeforeModal.focus();
+    lastFocusBeforeModal = null;
+  }
 }
 window.closeDetailModalPublic = closeDetailModal;
 document
@@ -1283,25 +1336,104 @@ function readEditFormValues() {
     const val = el.value.trim();
     values[f.key] = f.type === "date" && !val ? null : val;
   });
-  if (oos) {
-    values.mttoRealizado = "FUERA DE SERVICIO";
-    values.mttoProximo = "FUERA DE SERVICIO";
-    values.frecuenciaMtto = "FUERA DE SERVICIO";
-    values.calibracion = "FUERA DE SERVICIO";
-    values.proximaCalibracion = "FUERA DE SERVICIO";
-  }
+  values.fueraServicio = oos;
   return values;
 }
-window.saveEditForm = function () {
+
+// Llamada a la API: devuelve el JSON o lanza Error con el mensaje que envía el servidor
+async function apiPost(path, body) {
+  let resp;
+  try {
+    resp = await fetch(`${API_BASE}${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    throw new Error(
+      "No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.",
+    );
+  }
+  let data = null;
+  try {
+    data = await resp.json();
+  } catch {
+    /* respuesta sin JSON */
+  }
+  if (!resp.ok) {
+    throw new Error(data?.error || `Error del servidor (${resp.status})`);
+  }
+  return data;
+}
+
+// Cuerpo anidado que entiende la API (equipo + mantenimiento + calibración)
+function buildEquipoPayload(values, id) {
+  const equipo = {
+    uci_id: values.uci,
+    ubicacion: values.modulo || "",
+    equipo: values.equipo,
+    marca: values.marca || "",
+    modelo: values.modelo || "",
+    serie: values.serie || "",
+    placa: values.placa || "",
+    registro_invima: values.registroInvima || "",
+    clasificacion_invima: values.clasificacionInvima || "",
+    fuera_servicio: !!values.fueraServicio,
+  };
+  if (id) equipo.id = id;
+  return {
+    equipo,
+    mantenimiento: {
+      frecuencia: values.frecuenciaMtto || "",
+      fecha_realizado: values.mttoRealizado,
+      fecha_proxima: values.mttoProximo,
+    },
+    calibracion: {
+      fecha_realizada: values.calibracion,
+      fecha_proxima: values.proximaCalibracion,
+      certificado_calibracion: values.codigoCalibracion || "",
+    },
+  };
+}
+window.saveEditForm = async function () {
   if (!currentModalItem) return;
   const id = currentModalItem.id;
-  const updated = readEditFormValues();
-  OVERRIDES[id] = { ...(OVERRIDES[id] || {}), ...updated };
-  saveOverridesToStorage(OVERRIDES);
-  DATA = buildData();
-  renderAll();
-  const fresh = DATA.find((d) => d.id === id);
-  if (fresh) renderModalView(fresh);
+  const values = readEditFormValues();
+  if (!values.equipo) {
+    alert("El nombre del equipo es obligatorio");
+    return;
+  }
+  try {
+    await apiPost("/equipos/actualizar", buildEquipoPayload(values, id));
+    DATA = await buildData();
+    renderAll();
+    const fresh = DATA.find((d) => String(d.id) === String(id));
+    if (fresh) renderModalView(fresh);
+    else closeDetailModal();
+  } catch (error) {
+    console.error("Hubo un problema al actualizar el equipo:", error);
+    alert("No se pudo guardar los cambios: " + error.message);
+  }
+};
+
+window.deleteEquipo = async function () {
+  if (!currentModalItem || currentModalItem.id == null) return;
+  const item = currentModalItem;
+  if (
+    !confirm(
+      `¿Eliminar el equipo "${item.equipo}" (${item._code})? Se borrarán también su mantenimiento y calibración. Esta acción no se puede deshacer.`,
+    )
+  )
+    return;
+  try {
+    await apiPost("/equipos/eliminar", { id: item.id });
+    closeDetailModal();
+    DATA = await buildData();
+    renderAll();
+  } catch (error) {
+    console.error("Hubo un problema al eliminar el equipo:", error);
+    alert("No se pudo eliminar el equipo: " + error.message);
+  }
 };
 
 // window.saveNewEquipment = function () {
@@ -1346,95 +1478,16 @@ window.saveNewEquipmentCopy = async function () {
     return;
   }
 
-  const newEquipo = {
-    uci_id: values.uci,
-    ubicacion: values.uci?.toUpperCase() || "",
-    equipo: values.equipo,
-    marca: values.marca || "",
-    modelo: values.modelo || "",
-    serie: values.serie || "",
-    placa: values.placa || "",
-    registro_invima: values.registroInvima || "",
-    clasificacion_invima: values.clasificacionInvima || "",
-  };
-
   try {
-    const equipoResponse = await fetch(`${API_BASE}/equipos/crear`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(newEquipo),
-    });
-
-    if (!equipoResponse.ok) {
-      throw new Error(`Error en el servidor: ${response.statusText}`);
-    }
-
-    const equipoData = await equipoResponse.json();
-
-    const newMantenimiento = {
-      equipo_id: equipoData.id,
-      frecuencia: values.frecuenciaMtto || "",
-      fecha_realizado: values.mttoRealizado,
-      fecha_proxima: values.mttoProximo,
-    };
-
-    const newCalibracion = {
-      equipo_id: equipoData.id,
-      fecha_realizada: values.calibracion,
-      fecha_proxima: values.proximaCalibracion,
-      certificado_calibracion: values.codigoCalibracion || "",
-    };
-
-    if (equipoData.resultado) {
-      const mantenimientoResponse = await fetch(
-        `${API_BASE}/mantenimientos/crear`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(newMantenimiento),
-        },
-      );
-
-      const calibracionResponse = await fetch(
-        `${API_BASE}/calibraciones/crear`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(newCalibracion),
-        },
-      );
-
-      if (!mantenimientoResponse.ok) {
-        throw new Error(`Error en el servidor: ${response.statusText}`);
-      }
-
-      if (!calibracionResponse.ok) {
-        throw new Error(`Error en el servidor: ${response.statusText}`);
-      }
-
-      DATA = await buildData();
-      renderAll();
-
-      alert("Equipo guardado correctamente.");
-    }
+    await apiPost("/equipos/crear", buildEquipoPayload(values));
+    closeDetailModal();
+    DATA = await buildData();
+    renderAll();
+    alert("Equipo guardado correctamente.");
   } catch (error) {
     console.error("Hubo un problema al enviar el equipo:", error);
+    alert("No se pudo guardar el equipo: " + error.message);
   }
-
-  //   // DATA = buildDataFromDatabase(); // o volver a consultar la API
-  //   // renderAll();
-
-  //   // const fresh = DATA.find((d) => d.id === savedEquipment.id);
-
-  //   // if (fresh) {
-  //   //   renderModalView(fresh);
-  //   // }
 };
 
 let GEMINI_KEY = "";

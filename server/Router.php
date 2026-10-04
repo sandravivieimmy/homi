@@ -19,9 +19,10 @@ class Router
 
     public function comprobarRutas()
     {
-
-
-        $currentUrl = strtok($_SERVER['REQUEST_URI'], '?') ?? '/';
+        $currentUrl = strtok($_SERVER['REQUEST_URI'], '?') ?: '/';
+        if ($currentUrl !== '/') {
+            $currentUrl = rtrim($currentUrl, '/');
+        }
         $method = $_SERVER['REQUEST_METHOD'];
 
         if ($method === 'GET') {
@@ -30,12 +31,16 @@ class Router
             $fn = $this->postRoutes[$currentUrl] ?? null;
         }
 
-
         if ($fn) {
             // Call user fn va a llamar una función cuando no sabemos cual sera
             call_user_func($fn, $this); // This es para pasar argumentos
-        } else {
-            echo "Página No Encontrada o Ruta no válida";
+            return;
         }
+
+        $existe = isset($this->getRoutes[$currentUrl]) || isset($this->postRoutes[$currentUrl]);
+        Http::json(
+            ['error' => $existe ? 'Método no permitido' : 'Ruta no encontrada'],
+            $existe ? 405 : 404
+        );
     }
 }

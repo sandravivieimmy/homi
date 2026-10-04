@@ -69,10 +69,11 @@
           <input
             type="text"
             id="globalSearch"
+            aria-label="Buscar equipos"
             placeholder="Buscar equipo, marca, serie, placa, número de certificado de aseguramiento metrológico…"
           />
         </div>
-        <div class="seg" id="statusFilter">
+        <div class="seg" id="statusFilter" role="group" aria-label="Filtrar por estado">
           <button class="active" data-f="all">Todos</button>
           <button data-f="rojo">Vencidos</button>
           <button data-f="amarillo">Próximos</button>
@@ -94,7 +95,7 @@
     </div>
 
     <div class="ai-overlay" id="aiOverlay"></div>
-    <div class="ai-drawer" id="aiDrawer">
+    <div class="ai-drawer" id="aiDrawer" role="dialog" aria-modal="true" aria-labelledby="aiDrawerTitle">
       <div class="ai-drawer-head">
         <div class="ic">
           <svg
@@ -111,10 +112,10 @@
           </svg>
         </div>
         <div>
-          <h3>Asistente de mantenimiento</h3>
+          <h3 id="aiDrawerTitle">Asistente de mantenimiento</h3>
           <p>Consultas inteligentes sobre el inventario · Google Gemini</p>
         </div>
-        <button class="ai-close" id="closeAiBtn">✕</button>
+        <button class="ai-close" id="closeAiBtn" aria-label="Cerrar asistente">✕</button>
       </div>
 
       <div class="ai-key-box" id="aiKeyBox">
@@ -123,6 +124,7 @@
           <input
             type="password"
             id="geminiKeyInput"
+            aria-label="Clave de API de Google Gemini"
             placeholder="Pega tu API key (AIza…)"
           />
           <button id="saveKeyBtn">Guardar</button>
@@ -149,9 +151,10 @@
       <div class="ai-input-row">
         <textarea
           id="aiInput"
+          aria-label="Pregunta para el asistente"
           placeholder="Pregunta sobre el inventario, ej: ¿qué equipos vencen esta semana en P1?"
         ></textarea>
-        <button class="ai-send" id="aiSendBtn">
+        <button class="ai-send" id="aiSendBtn" aria-label="Enviar pregunta">
           <svg
             width="18"
             height="18"
@@ -167,14 +170,14 @@
     </div>
 
     <div class="detail-overlay" id="detailOverlay"></div>
-    <div class="detail-modal" id="detailModal">
+    <div class="detail-modal" id="detailModal" role="dialog" aria-modal="true" aria-labelledby="detailModalTitle" tabindex="-1">
       <div class="detail-modal-head">
         <div class="dm-title">
           <h4 id="detailModalTitle">Equipo</h4>
           <p id="detailModalSub">—</p>
         </div>
         <div class="detail-modal-actions" id="detailModalActions"></div>
-        <button class="detail-modal-close" id="detailModalClose">✕</button>
+        <button class="detail-modal-close" id="detailModalClose" aria-label="Cerrar detalle">✕</button>
       </div>
       <div class="detail-modal-body" id="detailModalBody"></div>
     </div>

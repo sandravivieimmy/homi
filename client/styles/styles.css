@@ -1701,3 +1701,37 @@ footer b {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
+
+/* Accesibilidad: foco visible para navegación con teclado */
+:focus-visible {
+  outline: 2px solid var(--cyan-400);
+  outline-offset: 2px;
+}
+.eq-row:focus-visible {
+  outline-offset: -2px;
+}
+
+/* Botón de eliminar del detalle del equipo */
+.dm-btn.danger {
+  background: #fff;
+  color: var(--crit-500);
+  border: 1px solid var(--crit-500);
+}
+.dm-btn.danger:hover {
+  background: var(--crit-500);
+  color: #fff;
+}
+
+/* Objetivos táctiles de al menos 36px en pantallas pequeñas */
+@media (max-width: 700px) {
+  button,
+  .ai-chip,
+  .ai-close,
+  .detail-modal-close {
+    min-height: 36px;
+  }
+  .ai-close,
+  .detail-modal-close {
+    min-width: 36px;
+  }
+}

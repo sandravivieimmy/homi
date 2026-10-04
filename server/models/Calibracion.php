@@ -24,8 +24,8 @@ class Calibracion extends ActiveRecord
     {
         $this->id = $args['id'] ?? null;
         $this->equipo_id = $args['equipo_id'] ?? null;
-        $this->fecha_realizada = $args['fecha_realizada'] ?? '';
-        $this->fecha_proxima = $args['fecha_proxima'] ?? '';
+        $this->fecha_realizada = $args['fecha_realizada'] ?? null;
+        $this->fecha_proxima = $args['fecha_proxima'] ?? null;
         $this->certificado_calibracion = $args['certificado_calibracion'] ?? '';
     }
 }

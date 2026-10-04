@@ -86,9 +86,32 @@ class ActiveRecord
         $atributos = $this->atributos();
         $sanitizado = [];
         foreach ($atributos as $key => $value) {
-            $sanitizado[$key] = self::$db->escape_string($value ?? '');;
+            // null se conserva para guardarlo como NULL (p. ej. fechas opcionales)
+            $sanitizado[$key] = is_null($value) ? null : self::$db->escape_string((string) $value);
         }
         return $sanitizado;
+    }
+
+    // Valor listo para SQL: NULL o texto entre comillas (el valor ya viene escapado)
+    protected static function literal($valor)
+    {
+        return is_null($valor) ? 'NULL' : "'" . $valor . "'";
+    }
+
+    // Transacciones (varias escrituras que deben guardarse todas o ninguna)
+    public static function iniciarTransaccion()
+    {
+        self::$db->begin_transaction();
+    }
+
+    public static function confirmarTransaccion()
+    {
+        self::$db->commit();
+    }
+
+    public static function revertirTransaccion()
+    {
+        self::$db->rollback();
     }
 
     // Sincroniza BD con Objetos en memoria
@@ -126,7 +149,7 @@ class ActiveRecord
     // Busca un registro por su id
     public static function find($id)
     {
-        $query = "SELECT * FROM " . static::$tabla  . " WHERE id = {$id}";
+        $query = "SELECT * FROM " . static::$tabla  . " WHERE id = " . (int) $id;
         $resultado = self::consultarSQL($query);
         return array_shift($resultado);
     }
@@ -134,6 +157,7 @@ class ActiveRecord
     // Busca un registro por su token
     public static function where($columna, $valor)
     {
+        $valor = self::$db->escape_string((string) $valor);
         $query = "SELECT * FROM " . static::$tabla  . " WHERE {$columna} = '{$valor}'";
         $resultado = self::consultarSQL($query);
         return array_shift($resultado);
@@ -165,9 +189,9 @@ class ActiveRecord
         // Insertar en la base de datos
         $query = " INSERT INTO " . static::$tabla . " ( ";
         $query .= join(', ', array_keys($atributos));
-        $query .= " ) VALUES ('";
-        $query .= join("', '", array_values($atributos));
-        $query .= "') ";
+        $query .= " ) VALUES (";
+        $query .= join(', ', array_map([static::class, 'literal'], array_values($atributos)));
+        $query .= ") ";
 
         // Resultado de la consulta
         $resultado = self::$db->query($query);
@@ -186,7 +210,7 @@ class ActiveRecord
         // Iterar para ir agregando cada campo de la BD
         $valores = [];
         foreach ($atributos as $key => $value) {
-            $valores[] = "{$key}='{$value}'";
+            $valores[] = "{$key}=" . self::literal($value);
         }
 
         // Consulta SQL
@@ -203,7 +227,7 @@ class ActiveRecord
     // Eliminar un Registro por su ID
     public function eliminar()
     {
-        $query = "DELETE FROM "  . static::$tabla . " WHERE id = " . self::$db->escape_string($this->id) . " LIMIT 1";
+        $query = "DELETE FROM "  . static::$tabla . " WHERE id = " . (int) $this->id . " LIMIT 1";
         $resultado = self::$db->query($query);
         return $resultado;
     }

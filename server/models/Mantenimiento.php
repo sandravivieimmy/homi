@@ -28,7 +28,7 @@ class Mantenimiento extends ActiveRecord
         $this->id = $args['id'] ?? null;
         $this->equipo_id = $args['equipo_id'] ?? null;
         $this->frecuencia = $args['frecuencia'] ?? '';
-        $this->fecha_realizado = $args['fecha_realizado'] ?? '';
-        $this->fecha_proxima = $args['fecha_proxima'] ?? '';
+        $this->fecha_realizado = $args['fecha_realizado'] ?? null;
+        $this->fecha_proxima = $args['fecha_proxima'] ?? null;
     }
 }

@@ -2,13 +2,17 @@
 
 namespace Controllers;
 
+use Model\Equipo;
 use Model\Mantenimiento;
+use MVC\Http;
+use MVC\HttpException;
+use MVC\Validar;
 
 class MantenimientoController
 {
     public static function index()
     {
-        return Mantenimiento::all();
+        Http::json(Mantenimiento::all());
     }
 
     public static function show($id)
@@ -18,14 +22,21 @@ class MantenimientoController
 
     public static function store($router)
     {
-        $datos = json_decode(file_get_contents('php://input'), true);
-        $mantenimiento = new Mantenimiento($datos);
+        $d = Http::body();
 
-        $resultado = $mantenimiento->guardar();
+        $equipoId = Validar::entero($d['equipo_id'] ?? null, 'equipo_id');
+        if (!Equipo::find($equipoId)) {
+            throw new HttpException('El equipo indicado no existe', 422);
+        }
 
-        header('Content-Type: application/json');
-        echo json_encode($resultado);
-        exit;
+        $mantenimiento = new Mantenimiento([
+            'equipo_id' => $equipoId,
+            'frecuencia' => Validar::texto($d['frecuencia'] ?? '', 'frecuencia', 50),
+            'fecha_realizado' => Validar::fecha($d['fecha_realizado'] ?? null, 'fecha_realizado'),
+            'fecha_proxima' => Validar::fecha($d['fecha_proxima'] ?? null, 'fecha_proxima'),
+        ]);
+
+        Http::json($mantenimiento->guardar());
     }
 
     public static function update($id, $datos)

@@ -3,12 +3,16 @@
 namespace Controllers;
 
 use Model\Calibracion;
+use Model\Equipo;
+use MVC\Http;
+use MVC\HttpException;
+use MVC\Validar;
 
 class CalibracionController
 {
     public static function index()
     {
-        return Calibracion::all();
+        Http::json(Calibracion::all());
     }
 
     public static function show($id)
@@ -18,14 +22,21 @@ class CalibracionController
 
     public static function store($router)
     {
-        $datos = json_decode(file_get_contents('php://input'), true);
-        $calibracion = new Calibracion($datos);
+        $d = Http::body();
 
-        $resultado = $calibracion->guardar();
+        $equipoId = Validar::entero($d['equipo_id'] ?? null, 'equipo_id');
+        if (!Equipo::find($equipoId)) {
+            throw new HttpException('El equipo indicado no existe', 422);
+        }
 
-        header('Content-Type: application/json');
-        echo json_encode($resultado);
-        exit;
+        $calibracion = new Calibracion([
+            'equipo_id' => $equipoId,
+            'fecha_realizada' => Validar::fecha($d['fecha_realizada'] ?? null, 'fecha_realizada'),
+            'fecha_proxima' => Validar::fecha($d['fecha_proxima'] ?? null, 'fecha_proxima'),
+            'certificado_calibracion' => Validar::texto($d['certificado_calibracion'] ?? '', 'certificado_calibracion', 30),
+        ]);
+
+        Http::json($calibracion->guardar());
     }
 
     public static function update($id, $datos)

@@ -7,7 +7,7 @@ RUN apt-get update \
     && docker-php-ext-install mysqli
 
 # database.php lee $_ENV: garantizamos que PHP exponga las variables de entorno de Render ahí
-RUN echo "variables_order=EGPCS" > "$PHP_INI_DIR/conf.d/zz-env.ini"
+RUN printf "variables_order=EGPCS\ndisplay_errors=Off\nlog_errors=On\nerror_log=/dev/stderr\n" > "$PHP_INI_DIR/conf.d/zz-env.ini"
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
