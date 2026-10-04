@@ -991,7 +991,7 @@ function rowHtml(i) {
   const stCal = subStatus(i, "cal");
   return `<tr class="eq-row" data-id="${i.id}" tabindex="0" aria-label="Ver detalle de ${escapeHtml(i.equipo)}">
     <td><span class="expand-ic">▸</span><span class="eq-name-wrap"><div class="eq-name">${escapeHtml(i.equipo)}</div><div class="eq-sub">${escapeHtml(i.marca)} ${escapeHtml(i.modelo)} · ${escapeHtml(i._code)}</div></span></td>
-    <td class="mono">${escapeHtml(i.modulo)}</td>
+    <td class="mono">${escapeHtml(i.modulo || "—")}</td>
     <td>${fmtDateHuman(i.mttoProximo)}<br>${daysTagHtml(i._mtto)}</td>
     <td><span class="dot-status"><span class="d" style="background:${STATUS_COLOR[stMtto.status]}"></span>${STATUS_LABEL[stMtto.status]}</span></td>
     <td>${fmtDateHuman(i.proximaCalibracion)}<br>${daysTagHtml(i._cal)}</td>
